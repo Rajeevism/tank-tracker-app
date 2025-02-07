@@ -4,7 +4,8 @@ import 'package:tank_tracker_app/components/my_button.dart';
 import 'package:tank_tracker_app/components/my_textfield.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final Function()? onTap;
+  const LoginPage({super.key, required this.onTap});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -15,16 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
 
   void signUserIn() async {
-    // Validate inputs
-    if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter Username and Password")),
-      );
-      return;
-    }
-
-    // Show loading indicator
+    //show loading circle
     showDialog(
       context: context,
       builder: (context) {
@@ -33,111 +25,55 @@ class _LoginPageState extends State<LoginPage> {
         );
       },
     );
-
+    
     try {
       // Try to sign in
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: usernameController.text.trim(),
         password: passwordController.text.trim(),
       );
-
-      if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
-    } catch (e) {
+    } on FirebaseAuthException catch (e) {
       Navigator.pop(context); // Close loading dialog
-      showDialog(
-          context: context,
-          builder: (context) {
-            return Center(child: Container(
-                height: 200,
-                width: 350,
-                decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    border: Border.all(color: Colors.grey.shade600), borderRadius: BorderRadius.circular(14.0)),
-                child: Center(child: Column(
-                  children: [
-                    Text("Authentication Error", style: TextStyle(fontWeight: FontWeight.bold)),
-                    Center(child: Text(e.toString())),
-                  ],
-                ))));
-          });
-      /*// Handle wrong email
-      if (e.code == 'user-not-found') {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Incorrect Email Address"),
-              content: const Text("The email address you entered is not registered."),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close the dialog
-                  },
-                  child: const Text("OK"),
-                ),
-              ],
-            );
-          },
-        );
-      }
-
-      // Handle wrong password
-      else if (e.code == 'wrong-password') {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Incorrect Password"),
-              content: const Text("The password you entered is incorrect."),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close the dialog
-                  },
-                  child: const Text("OK"),
-                ),
-              ],
-            );
-          },
-        );
-      }
-
-      // Handle other errors
-      else {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Error"),
-              content: Text(e.message ?? 'An error occurred'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close the dialog
-                  },
-                  child: const Text("OK"),
-                ),
-              ],
-            );
-          },
-        );
-      }*/
+      //show error message
+      showErrorMessage(e.code);
+      
     }
   }
+  //error message to the user
+  void showErrorMessage(String message) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: const Color.fromARGB(255, 33, 96, 243),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        title: Center(
+          child: Text(
+            message,
+            textAlign: TextAlign.center,  // Ensure text is centered
+            style: const TextStyle(
+              color: Colors.white,  // Change to white for better contrast
+              fontSize: 16,  
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
-    return Builder(
-      builder: (context) {
-        return Scaffold(
-          backgroundColor: const Color.fromARGB(255, 124, 207, 246),
-          body: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 124, 207, 246),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                     const SizedBox(height: 50),
                     Icon(
                       Icons.account_circle,
@@ -209,13 +145,16 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(color: Colors.grey[700]),
                         ),
                         const SizedBox(width: 4),
-                        const Text(
-                          'Register now',
-                          style: TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        GestureDetector(
+                          onTap: widget.onTap,
+                          child: const Text(
+                            "Register now",
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                            )),
+                        )
+                        
                       ],
                     ),
                   ],
@@ -225,6 +164,5 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       }
-    );
   }
-}
+
